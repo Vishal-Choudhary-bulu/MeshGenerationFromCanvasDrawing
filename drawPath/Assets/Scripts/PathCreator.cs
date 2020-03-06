@@ -9,9 +9,10 @@ public class PathCreator : MonoBehaviour
 {
     public static PathCreator path;
 
-    [Range(1,10)]
+    [Range(2, 10)]
     public int pathResolution = 2;
 
+    [Range(0.01f, 0.5f)]
     public float PathScale = 1f;
 
     public Material pathMaterial;
@@ -50,7 +51,7 @@ public class PathCreator : MonoBehaviour
 
     public void CalculatePoints()
     {
-        if(points.Count < 2)
+        if (points.Count < 2)
         {
             return;
         }
@@ -63,21 +64,23 @@ public class PathCreator : MonoBehaviour
         int x = 1;
 
         //until it circles back 
-        while(angle < 360)
+        while (angle < 360)
         {
             angle = 90 * x / pathResolution;
             angles.Add(angle);
             x++;
         }
 
-        foreach(PathPoint point in points)
+        foreach (PathPoint point in points)
         {
             Vector3 pos = point.Position;
             Vector3 dir = GetDirAtPoint(point);
 
-            foreach(var a in angles)
+            foreach (var a in angles)
             {
-                Vector3 newPos = pos + dir * Mathf.Cos(Mathf.Deg2Rad* a) + Vector3.up * Mathf.Sin(Mathf.Deg2Rad * a);
+                Vector3 newPos = pos +
+                    dir * Mathf.Cos(Mathf.Deg2Rad * a) * PathScale
+                    + Vector3.up * Mathf.Sin(Mathf.Deg2Rad * a) * PathScale;
                 meshVertices.Add(newPos);
             }
         }
@@ -87,14 +90,14 @@ public class PathCreator : MonoBehaviour
 
     private void CalculateTris()
     {
-        for(int i = 0; i < points.Count; i++)
+        for (int i = 0; i < points.Count - pathResolution; i++)
         {
-            for(int j = 1; j < pathResolution * 4; j++)
+            for (int j = 1; j < pathResolution * 4; j++)
             {
-                var v1 = i * pathResolution + j;
-                var v2 = (i + 1) * pathResolution + j;
-                var v3 = (i + 1) * pathResolution + j + 1;
-                var v4 = i * pathResolution + j + 1;
+                var v1 = i * 4 * pathResolution + j;
+                var v2 = (i + 1) * 4 * pathResolution + j;
+                var v3 = (i + 1) *4 * pathResolution + j + 1;
+                var v4 = i *4* pathResolution + j + 1;
 
                 meshTris.Add(v1);
                 meshTris.Add(v3);
@@ -104,10 +107,10 @@ public class PathCreator : MonoBehaviour
                 meshTris.Add(v3);
             }
 
-            var v5 = pathResolution * i + pathResolution;//4
-            var v6 = pathResolution * i + 1;//1
-            var v7 = pathResolution * (i + 1) + 1;//5
-            var v8 = pathResolution * (i+1) + pathResolution;//8
+            var v5 = 4 * pathResolution * i + 4 * pathResolution;//4
+            var v6 = 4 * pathResolution * i + 1;//1
+            var v7 = 4 * pathResolution * (i + 1) + 1;//5
+            var v8 = 4 * pathResolution * (i + 1) + 4 * pathResolution;//8
 
             meshTris.Add(v5);
             meshTris.Add(v7);
@@ -136,11 +139,11 @@ public class PathCreator : MonoBehaviour
     private Vector3 GetDirAtPoint(PathPoint point)
     {
         int i = points.IndexOf(point);
-        if(i == points.Count - 1)
+        if (i == points.Count - 1)
         {
             i -= 1;
         }
-        return Quaternion.AngleAxis(90, transform.up) * (points[i+1].Position - points[i].Position).normalized;
+        return Quaternion.AngleAxis(90, transform.up) * (points[i + 1].Position - points[i].Position).normalized;
     }
 
 
